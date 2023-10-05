@@ -145,12 +145,6 @@ public:
         }
     }
 
-    void test(const std::vector<double>& input) {
-        // Test the neural network
-        std::vector<double> outputs = feedforward(input);
-        std::cout << "Input: \033[1;32m" << input[0] << " " << input[1] << "\033[0m | Output: \033[1;32m" << outputs[0] << "\033[0m" << std::endl;
-    }
-
     void saveModel(const std::string& filePath) {
         std::ofstream file(filePath);
         if (file.is_open()) {

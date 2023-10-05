@@ -17,11 +17,23 @@ int main() {
         {{1.0, 1.0}, {0.0}}
     };
 
-    neuralNetwork.train(trainingData, 100000);
-    neuralNetwork.test({0.0, 0.0});
-    neuralNetwork.test({0.0, 1.0});
-    neuralNetwork.test({1.0, 0.0});
-    neuralNetwork.test({1.0, 1.0});
+    neuralNetwork.train(trainingData, 10000000);
+    
+    std::vector<std::vector<double>> testData = {
+        {0.0, 0.0},
+        {0.0, 1.0},
+        {1.0, 0.0},
+        {1.0, 1.0}
+    };
+
+    for (auto& input : testData) {
+        auto output = neuralNetwork.feedforward(input);
+        bool correct = (output[0] < 0.5 && input[0] == 0.0 && input[1] == 0.0) ||
+                       (output[0] > 0.5 && input[0] == 0.0 && input[1] == 1.0) ||
+                       (output[0] > 0.5 && input[0] == 1.0 && input[1] == 0.0) ||
+                       (output[0] < 0.5 && input[0] == 1.0 && input[1] == 1.0);
+        std::cout  << "\033[0m Input: \033[1m" << input[0] << " " << input[1] << "\033[0m " << "Output: " << (correct ? "\033[1;32m" : "\033[1;31m") << output[0]  << std::endl;
+    }
 
     return 0;
 }

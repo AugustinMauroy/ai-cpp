@@ -1,3 +1,6 @@
+#ifndef NEURAL_NETWORK_H
+#define NEURAL_NETWORK_H
+
 #include <iostream>
 #include <vector>
 #include <cmath>
@@ -25,25 +28,24 @@ private:
     int hiddenSize;
     int outputSize;
     double learningRate;
+
     struct {
-        std::vector<std::vector<double> > inputToHidden;
-        std::vector<std::vector<double> > hiddenToOutput;
+        std::vector<std::vector<double>> inputToHidden;
+        std::vector<std::vector<double>> hiddenToOutput;
     } weights;
 
 public:
-    NeuralNetwork(const NeuralNetworkConfig& config) {
-        inputSize = config.inputSize;
-        hiddenSize = config.hiddenSize;
-        outputSize = config.outputSize;
-        learningRate = config.learningRate;
-
-        weights.inputToHidden.resize(inputSize, std::vector<double>(hiddenSize));
-        weights.hiddenToOutput.resize(hiddenSize, std::vector<double>(outputSize));
+    NeuralNetwork(const NeuralNetworkConfig& config)
+        : inputSize(config.inputSize), hiddenSize(config.hiddenSize),
+          outputSize(config.outputSize), learningRate(config.learningRate) {
 
         // Initialize the weights of the neural network with random values
         std::random_device rd;
         std::mt19937 gen(rd());
         std::uniform_real_distribution<double> dist(0.0, 1.0);
+
+        weights.inputToHidden = std::vector<std::vector<double>>(inputSize, std::vector<double>(hiddenSize));
+        weights.hiddenToOutput = std::vector<std::vector<double>>(hiddenSize, std::vector<double>(outputSize));
 
         for (int i = 0; i < inputSize; i++) {
             for (int j = 0; j < hiddenSize; j++) {
@@ -148,14 +150,14 @@ public:
     void saveModel(const std::string& filePath) {
         std::ofstream file(filePath);
         if (file.is_open()) {
-            for (int i = 0; i < inputSize; i++) {
-                for (int j = 0; j < hiddenSize; j++) {
-                    file << weights.inputToHidden[i][j] << " ";
+            for (const auto& row : weights.inputToHidden) {
+                for (const double val : row) {
+                    file << val << ' ';
                 }
             }
-            for (int i = 0; i < hiddenSize; i++) {
-                for (int j = 0; j < outputSize; j++) {
-                    file << weights.hiddenToOutput[i][j] << " ";
+            for (const auto& row : weights.hiddenToOutput) {
+                for (const double val : row) {
+                    file << val << ' ';
                 }
             }
             file.close();
@@ -165,17 +167,19 @@ public:
     void loadModel(const std::string& filePath) {
         std::ifstream file(filePath);
         if (file.is_open()) {
-            for (int i = 0; i < inputSize; i++) {
-                for (int j = 0; j < hiddenSize; j++) {
-                    file >> weights.inputToHidden[i][j];
+            for (auto& row : weights.inputToHidden) {
+                for (double& val : row) {
+                    file >> val;
                 }
             }
-            for (int i = 0; i < hiddenSize; i++) {
-                for (int j = 0; j < outputSize; j++) {
-                    file >> weights.hiddenToOutput[i][j];
+            for (auto& row : weights.hiddenToOutput) {
+                for (double& val : row) {
+                    file >> val;
                 }
             }
             file.close();
         }
     }
 };
+
+#endif

@@ -2,4 +2,7 @@
 .vscode
 
 # build output
-neural_network
+*_neural_network
+
+# models
+*-model.txt

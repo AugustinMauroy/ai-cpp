@@ -13,6 +13,14 @@ public:
     static double sigmoid(double x) {
         return 1.0 / (1.0 + exp(-x));
     }
+    static double tanh(double x) {
+        return (exp(x) - exp(-x)) / (exp(x) + exp(-x));
+    }
+};
+
+enum ActivationFunction {
+    TANH,
+    SIGMOID
 };
 
 struct NeuralNetworkConfig {
@@ -20,6 +28,7 @@ struct NeuralNetworkConfig {
     int hiddenSize;
     int outputSize;
     double learningRate;
+    ActivationFunction activationFunction;
 };
 
 class NeuralNetwork {
@@ -28,6 +37,7 @@ private:
     int hiddenSize;
     int outputSize;
     double learningRate;
+    ActivationFunction activationFunction;
 
     struct {
         std::vector<std::vector<double>> inputToHidden;
@@ -35,9 +45,10 @@ private:
     } weights;
 
 public:
-    NeuralNetwork(const NeuralNetworkConfig& config)
+    NeuralNetwork(const NeuralNetworkConfig& config, ActivationFunction activationFunction)
         : inputSize(config.inputSize), hiddenSize(config.hiddenSize),
-          outputSize(config.outputSize), learningRate(config.learningRate) {
+          outputSize(config.outputSize), learningRate(config.learningRate),
+          activationFunction(activationFunction) {
 
         // Initialize the weights of the neural network with random values
         std::random_device rd;
@@ -60,6 +71,20 @@ public:
         }
     }
 
+    double activate(double x) {
+        switch (activationFunction) {
+        case SIGMOID:
+            return MathUtils::sigmoid(x);
+            break;
+        case TANH:
+            return MathUtils::tanh(x);
+            break;
+        default:
+            MathUtils::tanh(x);
+            break;
+        }
+    }
+
     std::vector<double> feedforward(const std::vector<double>& inputs) {
         std::vector<double> hiddenOutputs(hiddenSize, 0.0);
 
@@ -69,7 +94,7 @@ public:
             for (int j = 0; j < inputSize; j++) {
                 sum += inputs[j] * weights.inputToHidden[j][i];
             }
-            hiddenOutputs[i] = MathUtils::sigmoid(sum);
+            hiddenOutputs[i] = activate(sum);
         }
 
         std::vector<double> outputs(outputSize, 0.0);
@@ -80,7 +105,7 @@ public:
             for (int j = 0; j < hiddenSize; j++) {
                 sum += hiddenOutputs[j] * weights.hiddenToOutput[j][i];
             }
-            outputs[i] = MathUtils::sigmoid(sum);
+            outputs[i] = activate(sum);
         }
 
         return outputs;
@@ -96,7 +121,7 @@ public:
             for (int j = 0; j < inputSize; j++) {
                 sum += inputs[j] * weights.inputToHidden[j][i];
             }
-            hiddenOutputs[i] = MathUtils::sigmoid(sum);
+            hiddenOutputs[i] = activate(sum);
         }
 
         for (int i = 0; i < outputSize; i++) {
@@ -104,7 +129,7 @@ public:
             for (int j = 0; j < hiddenSize; j++) {
                 sum += hiddenOutputs[j] * weights.hiddenToOutput[j][i];
             }
-            outputs[i] = MathUtils::sigmoid(sum);
+            outputs[i] = activate(sum);
         }
 
         // Calculate the output error
@@ -161,10 +186,12 @@ public:
                 }
             }
             file.close();
+        } else {
+            std::cout << "Unable to open file " << filePath << std::endl;
         }
     }
 
-    void loadModel(const std::string& filePath) {
+    int loadModel(const std::string& filePath) {
         std::ifstream file(filePath);
         if (file.is_open()) {
             for (auto& row : weights.inputToHidden) {
@@ -178,6 +205,10 @@ public:
                 }
             }
             file.close();
+            return true;
+        } else {
+            std::cout << "No model found at " << filePath << std::endl;
+            return false;
         }
     }
 };

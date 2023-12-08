@@ -6,3 +6,6 @@
 
 # models
 *-model.txt
+
+# Macos
+.DS_Store

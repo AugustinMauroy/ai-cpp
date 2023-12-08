@@ -1,6 +1,6 @@
 #include "src/nn.cpp"
 
-int main() {
+int main(void) {
     NeuralNetworkConfig config;
     config.inputSize = 2;
     config.hiddenSize = 3;

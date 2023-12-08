@@ -1,7 +1,7 @@
 #include <iostream>
 #include "./src/nn.cpp"
 
-int main() {
+int main(void) {
     int inputSize = 2;
     int hiddenSize = 8;
     int outputSize = 4;

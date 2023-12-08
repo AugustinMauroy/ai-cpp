@@ -7,6 +7,7 @@
 #include <fstream>
 #include <sstream>
 #include <random>
+#include <algorithm>
 
 class MathUtils {
 public:
@@ -20,7 +21,11 @@ public:
 
 enum ActivationFunction {
     TANH,
-    SIGMOID
+    SIGMOID,
+    RELU,
+    LINEAR,
+    TANH_DERIVATIVE,
+    SOFTMAX
 };
 
 struct NeuralNetworkConfig {
@@ -75,13 +80,19 @@ public:
         switch (activationFunction) {
         case SIGMOID:
             return MathUtils::sigmoid(x);
-            break;
         case TANH:
             return MathUtils::tanh(x);
-            break;
+        case RELU:
+            return std::max(0.0, x);  // ReLU activation function
+        case LINEAR:
+            return x;  // Linear activation function
+        case TANH_DERIVATIVE:
+            return 1.0 - MathUtils::tanh(x) * MathUtils::tanh(x);  // Derivative of tanh
+        case SOFTMAX:
+            // Softmax will be applied during the feedforward step
+            return x;
         default:
-            MathUtils::tanh(x);
-            break;
+            return MathUtils::tanh(x);
         }
     }
 
@@ -106,6 +117,18 @@ public:
                 sum += hiddenOutputs[j] * weights.hiddenToOutput[j][i];
             }
             outputs[i] = activate(sum);
+        }
+
+        // Apply softmax activation for the output layer
+        if (activationFunction == ActivationFunction::SOFTMAX) {
+            double expSum = 0.0;
+            for (int i = 0; i < outputSize; i++) {
+                expSum += exp(outputs[i]);
+            }
+
+            for (int i = 0; i < outputSize; i++) {
+                outputs[i] = exp(outputs[i]) / expSum;
+            }
         }
 
         return outputs;

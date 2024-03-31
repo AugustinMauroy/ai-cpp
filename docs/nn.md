@@ -1,4 +1,4 @@
-# Neural Network C++ Implementation Documentation
+# 🧠 Neural Network C++ Implementation Documentation
 
 ## Table of Contents
 

@@ -2,7 +2,15 @@
 
 A simple neural network implementation in C++.
 
+> \[!IMPORTANT]\
+> This project is learning/discovering oriented.
+
 ## Build
+
+This project require [LLVM](https://llvm.org/) installed on your system.
+
+> \[!NOTE]\
+> It's build with standard C++17 library. So you don't need to install any other library.
 
 ```bash
 # xor example

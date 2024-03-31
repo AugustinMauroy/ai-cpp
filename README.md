@@ -1,4 +1,4 @@
-# IA-CPP
+# AI-CPP
 
 A simple neural network implementation in C++.
 

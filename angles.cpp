@@ -29,13 +29,32 @@ int main(void) {
 
         int numberOfIterations = 10000;
         std::cout << "Starting training..." << std::endl;
-        neuralNetwork.train(trainingData, numberOfIterations);
+        neuralNetwork.train(trainingData, trainingData, numberOfIterations);
         std::cout << "Training finished!" << std::endl;
 
         std::cout << "Saving model..." << std::endl;
         neuralNetwork.saveModel("angles-model.txt");
         std::cout << "Model saved!" << std::endl;
     }
+
+    std::cout << "Testing model..." << std::endl;
+    int correctPredictions = 0;
+    ProgressBar progressBar(360);
+    for (int angle = 0; angle < 360; angle++) {
+        progressBar.update();
+        double radians = angle * M_PI / 180.0;
+        int quadrant = static_cast<int>(angle / 90.0) % 4 + 1;
+        std::vector<double> inputs = {cos(radians), sin(radians)};
+        std::vector<double> outputs = neuralNetwork.feedforward(inputs);
+        int predictedQuadrant = std::distance(outputs.begin(), std::max_element(outputs.begin(), outputs.end())) + 1;
+        if (predictedQuadrant == quadrant) {
+            correctPredictions++;
+        }
+    }
+
+    double accuracy = static_cast<double>(correctPredictions) / 360.0 * 100.0;
+    std::cout << "Model accuracy: " << accuracy << "%" << std::endl;
+
 
     while(1) {
         std::cout << "Enter an angle in degrees (or press ESC to exit): \033[1;32m" << std::flush;

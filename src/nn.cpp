@@ -8,6 +8,7 @@
 #include <sstream>
 #include <random>
 #include <algorithm>
+#include "./progressBar.cpp"
 
 class MathUtils {
 public:
@@ -52,8 +53,8 @@ private:
 public:
     NeuralNetwork(const NeuralNetworkConfig& config, ActivationFunction activationFunction)
         : inputSize(config.inputSize), hiddenSize(config.hiddenSize),
-          outputSize(config.outputSize), learningRate(config.learningRate),
-          activationFunction(activationFunction) {
+            outputSize(config.outputSize), learningRate(config.learningRate),
+            activationFunction(activationFunction) {
 
         // Initialize the weights of the neural network with random values
         std::random_device rd;
@@ -186,13 +187,49 @@ public:
         }
     }
 
-    void train(const std::vector<std::pair<std::vector<double>, std::vector<double>>>& trainingData, int numberOfIterations) {
-        // Train the neural network
+    void train(
+                const std::vector<std::pair<std::vector<double>, std::vector<double>>>& trainingData,
+                const std::vector<std::pair<std::vector<double>, std::vector<double>>>& validationData,
+                int numberOfIterations
+            ) {
+        double bestValidationLoss = std::numeric_limits<double>::max();
+        std::vector<std::vector<double>> bestWeightsInputToHidden;
+        std::vector<std::vector<double>> bestWeightsHiddenToOutput;
+
+        ProgressBar progressBar(numberOfIterations);
         for (int i = 0; i < numberOfIterations; i++) {
+            progressBar.update();
             int randomIndex = rand() % trainingData.size();
             const auto& [randomInputs, randomTargets] = trainingData[randomIndex];
             backpropagation(randomInputs, randomTargets);
+
+            // Evaluate on validation set periodically
+            if ((i + 1) % 100 == 0) {
+                double validationLoss = calculateLoss(validationData);
+                if (validationLoss < bestValidationLoss) {
+                    bestValidationLoss = validationLoss;
+                    bestWeightsInputToHidden = weights.inputToHidden;
+                    bestWeightsHiddenToOutput = weights.hiddenToOutput;
+                }
+            }
         }
+
+        // Restore best weights
+        weights.inputToHidden = bestWeightsInputToHidden;
+        weights.hiddenToOutput = bestWeightsHiddenToOutput;
+    }
+
+    double calculateLoss(const std::vector<std::pair<std::vector<double>, std::vector<double>>>& data) {
+        double totalLoss = 0.0;
+        for (const auto& [inputs, targets] : data) {
+            auto outputs = feedforward(inputs);
+            double instanceLoss = 0.0;
+            for (int i = 0; i < outputSize; ++i) {
+                instanceLoss += pow(targets[i] - outputs[i], 2); // Using mean squared error
+            }
+            totalLoss += instanceLoss / outputSize;
+        }
+        return totalLoss / data.size();
     }
 
     void saveModel(const std::string& filePath) {

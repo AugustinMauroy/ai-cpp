@@ -9,3 +9,7 @@
 
 # Macos
 .DS_Store
+
+# Big dataset
+cifar-100-binary.tar.gz
+dataset/cifar-100-binary/*

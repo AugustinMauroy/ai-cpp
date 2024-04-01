@@ -21,6 +21,13 @@ g++ -std=c++17 -o angles_neural_network angles.cpp && ./angles_neural_network
 g++ -std=c++17 -o mnist_neural_network mnist.cpp && ./mnist_neural_network
 # iris example
 g++ -std=c++17 -o iris_neural_network iris.cpp && ./iris_neural_network
+# cifar-100 example need curl and tar
+cd dataset
+curl -O https://www.cs.toronto.edu/~kriz/cifar-100-binary.tar.gz
+tar -xvf cifar-100-binary.tar.gz
+rm cifar-100-binary.tar.gz
+cd ../
+g++ -std=c++17 -o cifar-100_neural_network cifar-100.cpp && ./cifar-100_neural_network
 ```
 
 ## Neural Network lib

@@ -5,21 +5,28 @@
 #include <string>
 #include "src/nn.cpp"
 
-// this variable is temporary it's will replace by fine_label_names.txt
-const std::vector<std::string> label_names = {
-    "apple", "aquarium_fish", "baby", "bear", "beaver", "bed", "bee", "beetle", "bicycle", "bottle",
-    "bowl", "boy", "bridge", "bus", "butterfly", "camel", "can", "castle", "caterpillar", "cattle",
-    "chair", "chimpanzee", "clock", "cloud", "cockroach", "couch", "crab", "crocodile", "cup",
-    "dinosaur", "dolphin", "elephant", "flatfish", "forest", "fox", "girl", "hamster", "house",
-    "kangaroo", "keyboard", "lamp", "lawn_mower", "leopard", "lion", "lizard", "lobster", "man",
-    "maple_tree", "motorcycle", "mountain", "mouse", "mushroom", "oak_tree", "orange", "orchid",
-    "otter", "palm_tree", "pear", "pickup_truck", "pine_tree", "plain", "plate", "poppy", "porcupine",
-    "possum", "rabbit", "raccoon", "ray", "road", "rocket", "rose", "sea", "seal", "shark", "shrew",
-    "skunk", "skyscraper", "snail", "snake", "spider", "squirrel", "streetcar", "sunflower", "sweet_pepper",
-    "table", "tank", "telephone", "television", "tiger", "tractor", "train", "trout", "tulip", "turtle",
-    "wardrobe", "whale", "willow_tree", "wolf", "woman", "worm"};
+std::vector<std::string> read_label_names(const std::string& file_path) {
+    std::ifstream file(file_path);
+    std::vector<std::string> label_names;
+    if (file.is_open()) {
+        std::string label;
+        while (std::getline(file, label)) {
+            label_names.push_back(label);
+        }
+        file.close();
+    } else {
+        std::cerr << "Error: failed to open file " << file_path << std::endl;
+    }
+    return label_names;
+}
+
+std::vector<std::string> coarse_label_names = read_label_names("dataset/cifar-100-binary/coarse_label_names.txt");
+std::vector<std::string> fine_label_names = read_label_names("dataset/cifar-100-binary/fine_label_names.txt");
 
 void display_image(const std::vector<uint8_t>& image) {
+    // clear the screen
+    std::cout << "\033[2J";
+    // move the cursor to the top left corner
     std::cout << "\033[0;0H";
     for (size_t i = 0; i < 32; ++i) {
         for (size_t j = 0; j < 32; ++j) {
@@ -30,14 +37,15 @@ void display_image(const std::vector<uint8_t>& image) {
             std::string color_code = "\033[48;2;" + std::to_string(r) + ";" + std::to_string(g) + ";" + std::to_string(b) + "m  ";
             std::cout << color_code;
         }
+        // reset the color
         std::cout << "\033[0m" << std::endl;
     }
+    std::cout << std::endl;
 }
 
 // read CIFAR-100 dataset from binary file
-std::vector<std::pair<std::vector<uint8_t>, uint8_t>> read_cifar100(const std::string& file_path) {
-    std::ifstream
-        file(file_path, std::ios::binary);
+std::vector<std::pair<std::vector<uint8_t>, std::pair<uint8_t, uint8_t>>> read_cifar100(const std::string& file_path) {
+    std::ifstream file(file_path, std::ios::binary);
     if (!file.is_open()) {
         std::cerr << "Error: failed to open file " << file_path << std::endl;
         return {};
@@ -47,18 +55,22 @@ std::vector<std::pair<std::vector<uint8_t>, uint8_t>> read_cifar100(const std::s
     size_t file_size = file.tellg();
     file.seekg(0, std::ios::beg);
     ProgressBar progress_bar(file_size);
-    std::vector<std::pair<std::vector<uint8_t>, uint8_t>> data;
+    std::vector<std::pair<std::vector<uint8_t>, std::pair<uint8_t, uint8_t>>> data;
     while (file.tellg() < file_size) {
         std::vector<uint8_t> image(3072);
+        uint8_t coarse_label, fine_label;
+        file.read(reinterpret_cast<char*>(&coarse_label), 1);
+        file.read(reinterpret_cast<char*>(&fine_label), 1);
         file.read(reinterpret_cast<char*>(image.data()), 3072);
-        uint8_t label;
-        file.read(reinterpret_cast<char*>(&label), 1);
-        data.push_back({image, label});
+        // Push the image and label pair into the data vector
+        data.push_back({image, {coarse_label, fine_label}});
         progress_bar.update();
-        // debug:
-        //display_image(image);
-        //std::cout << label_names[label] << std::endl;
-        //std::cin.get();
+
+        // debug
+        // display_image(image);
+        // std::cout << "Coarse label: " << coarse_label_names[coarse_label] << std::endl;
+        // std::cout << "Fine label: " << fine_label_names[fine_label] << std::endl;
+        // std::cin.get();
     }
 
     return data;
@@ -66,8 +78,9 @@ std::vector<std::pair<std::vector<uint8_t>, uint8_t>> read_cifar100(const std::s
 
 
 
+
 int main(void) {
-    std::cout << "\033[33;1mWARNING:\033[0m This program isn't 100\% accurate, I (Augstin) can't guarantee the accuracy of the results." << std::endl;
+    std::cout << "\033[33;1mWARNING:\033[0m This program isn't 100\% accurate, I (Augustin) can't guarantee the accuracy of the results." << std::endl;
     std::string train_file_path = "dataset/cifar-100-binary/train.bin";
     std::string test_file_path = "dataset/cifar-100-binary/test.bin";
 
@@ -96,7 +109,7 @@ int main(void) {
                 pixelValues[j] = static_cast<double>(train_data[i].first[j]) / 255.0;
             }
             std::vector<double> target(255, 0.0);
-            target[train_data[i].second] = 1.0;
+            target[train_data[i].second.first] = 1.0;
             cifar100_training_data.push_back({pixelValues, target});
         }
         std::cout << "Training CIFAR-100 neural network..." << std::endl;
@@ -122,7 +135,7 @@ int main(void) {
                 max_index = j;
             }
         }
-        if (max_index == test_data[i].second) {
+        if (max_index == test_data[i].second.first) {
             correct_predictions++;
         }
     }
@@ -138,7 +151,7 @@ int main(void) {
             continue;
         }
         display_image(test_data[index].first);
-        std::cout << "Label: " << label_names[test_data[index].second] << std::endl;
+        std::cout << "Label: " << fine_label_names[test_data[index].second.first] << std::endl;
         std::vector<double> pixelValues(3072, 0.0);
         for (size_t j = 0; j < 3072; ++j) {
             pixelValues[j] = static_cast<double>(test_data[index].first[j]) / 255.0;
@@ -150,7 +163,7 @@ int main(void) {
                 max_index = j;
             }
         }
-        std::cout << "Prediction: " << label_names[max_index] << std::endl;
+        std::cout << "Prediction: " << fine_label_names[max_index] << std::endl;
         std::cout << "Press enter to continue...";
         std::cin.get();
         std::cin.get();

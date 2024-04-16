@@ -33,6 +33,20 @@ int main(void) {
         {1.0, 1.0}
     };
 
+    int correctPredictions = 0;
+    for (auto& input : testData) {
+        auto output = neuralNetwork.feedforward(input);
+        bool correct = (output[0] < 0.5 && input[0] == 0.0 && input[1] == 0.0) ||
+                        (output[0] > 0.5 && input[0] == 0.0 && input[1] == 1.0) ||
+                        (output[0] > 0.5 && input[0] == 1.0 && input[1] == 0.0) ||
+                        (output[0] < 0.5 && input[0] == 1.0 && input[1] == 1.0);
+        if (correct) {
+            correctPredictions++;
+        }
+    }
+
+    std::cout << "Accuracy: " << (correctPredictions / static_cast<double>(testData.size())) * 100 << "%" << std::endl;
+
     for (auto& input : testData) {
         auto output = neuralNetwork.feedforward(input);
         bool correct = (output[0] < 0.5 && input[0] == 0.0 && input[1] == 0.0) ||

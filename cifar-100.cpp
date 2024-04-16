@@ -51,12 +51,8 @@ std::vector<std::pair<std::vector<uint8_t>, std::pair<uint8_t, uint8_t>>> read_c
         return {};
     }
 
-    file.seekg(0, std::ios::end);
-    size_t file_size = file.tellg();
-    file.seekg(0, std::ios::beg);
-    ProgressBar progress_bar(file_size);
     std::vector<std::pair<std::vector<uint8_t>, std::pair<uint8_t, uint8_t>>> data;
-    while (file.tellg() < file_size) {
+    while (!file.eof()) {
         std::vector<uint8_t> image(3072);
         uint8_t coarse_label, fine_label;
         file.read(reinterpret_cast<char*>(&coarse_label), 1);
@@ -64,7 +60,6 @@ std::vector<std::pair<std::vector<uint8_t>, std::pair<uint8_t, uint8_t>>> read_c
         file.read(reinterpret_cast<char*>(image.data()), 3072);
         // Push the image and label pair into the data vector
         data.push_back({image, {coarse_label, fine_label}});
-        progress_bar.update();
 
         // debug
         // display_image(image);
@@ -93,7 +88,7 @@ int main(void) {
     config.inputSize = 3072;
     config.hiddenSize = 100;
     config.outputSize = 100;
-    config.learningRate = 0.1;
+    config.learningRate = 0.01;
     config.activationFunction = ActivationFunction::RELU;
 
     NeuralNetwork cifar100_network(config, config.activationFunction);

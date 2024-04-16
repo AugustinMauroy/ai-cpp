@@ -2,7 +2,6 @@
 #include <fstream>
 #include <vector>
 #include "src/nn.cpp"
-#include "src/progressBar.cpp"
 
 std::vector<std::vector<uint8_t>> read_mnist_images(const std::string& file_path) {
     std::ifstream file(file_path, std::ios::binary);
@@ -100,7 +99,7 @@ int main(void) {
     config.hiddenSize = 64;
     config.outputSize = 10;
     config.learningRate = 0.01;
-    config.activationFunction = ActivationFunction::TANH;
+    config.activationFunction = TANH;
 
     NeuralNetwork mnistNetwork(config, config.activationFunction);
 

@@ -6,7 +6,7 @@ int main(void) {
     int hiddenSize = 8;
     int outputSize = 4;
     double learningRate = 0.01;
-    ActivationFunction activation = TANH;
+    ActivationFunction activation = SIGMOID;
 
     NeuralNetworkConfig config = {inputSize, hiddenSize, outputSize, learningRate};
     NeuralNetwork neuralNetwork(config, activation);
@@ -27,9 +27,8 @@ int main(void) {
         }
         std::cout << "Training data generated!" << std::endl;
 
-        int numberOfIterations = 10000;
         std::cout << "Starting training..." << std::endl;
-        neuralNetwork.train(trainingData, trainingData, numberOfIterations);
+        neuralNetwork.train(trainingData, trainingData, 1000000);
         std::cout << "Training finished!" << std::endl;
 
         std::cout << "Saving model..." << std::endl;
@@ -37,11 +36,8 @@ int main(void) {
         std::cout << "Model saved!" << std::endl;
     }
 
-    std::cout << "Testing model..." << std::endl;
     int correctPredictions = 0;
-    ProgressBar progressBar(360);
     for (int angle = 0; angle < 360; angle++) {
-        progressBar.update();
         double radians = angle * M_PI / 180.0;
         int quadrant = static_cast<int>(angle / 90.0) % 4 + 1;
         std::vector<double> inputs = {cos(radians), sin(radians)};

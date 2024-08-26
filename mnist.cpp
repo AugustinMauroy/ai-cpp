@@ -96,12 +96,13 @@ int main(void) {
     
     NeuralNetworkConfig config;
     config.inputSize = num_rows * num_cols;
-    config.hiddenSize = 64;
+    config.hiddenSize = 128;
     config.outputSize = 10;
     config.learningRate = 0.01;
     config.activationFunction = TANH;
 
-    NeuralNetwork mnistNetwork(config, config.activationFunction);
+    double dropoutRate = 0.2;
+    NeuralNetwork mnistNetwork(config, config.activationFunction, dropoutRate);
 
     int modelLoaded = mnistNetwork.loadModel("mnist-model.txt");
 
@@ -120,7 +121,7 @@ int main(void) {
         std::cout << "MNIST data loaded !" << std::endl;
 
         std::cout << "Training neural network..." << std::endl;
-        mnistNetwork.train(mnistTrainingData, mnistTrainingData, 10000);
+        mnistNetwork.train(mnistTrainingData, mnistTrainingData, 100);
         std::cout << "Training complete." << std::endl;
 
         mnistNetwork.saveModel("mnist-model.txt");

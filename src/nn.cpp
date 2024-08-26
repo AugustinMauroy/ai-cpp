@@ -8,6 +8,8 @@
 #include <sstream>
 #include <random>
 #include <algorithm>
+#include <chrono>
+#include <cstdlib>
 #include "./progressBar.cpp"
 
 class MathUtils {
@@ -43,6 +45,7 @@ private:
     int hiddenSize;
     int outputSize;
     double learningRate;
+    double dropoutRate;
     ActivationFunction activationFunction;
 
     struct {
@@ -51,10 +54,10 @@ private:
     } weights;
 
 public:
-    NeuralNetwork(const NeuralNetworkConfig& config, ActivationFunction activationFunction)
+    NeuralNetwork(const NeuralNetworkConfig& config, ActivationFunction activationFunction, double dropoutRate = 0.0)
         : inputSize(config.inputSize), hiddenSize(config.hiddenSize),
             outputSize(config.outputSize), learningRate(config.learningRate),
-            activationFunction(activationFunction) {
+            activationFunction(activationFunction), dropoutRate(dropoutRate) {
 
         // Initialize the weights of the neural network with random values
         std::random_device rd;
@@ -97,7 +100,7 @@ public:
         }
     }
 
-    std::vector<double> feedforward(const std::vector<double>& inputs) {
+    std::vector<double> feedforward(const std::vector<double>& inputs, bool isTraining = true) {
         std::vector<double> hiddenOutputs(hiddenSize, 0.0);
 
         // Calculate the outputs of the hidden layer
@@ -107,6 +110,15 @@ public:
                 sum += inputs[j] * weights.inputToHidden[j][i];
             }
             hiddenOutputs[i] = activate(sum);
+
+            // Apply dropout during training
+            if (isTraining && dropoutRate > 0.0) {
+                if (static_cast<double>(rand()) / RAND_MAX < dropoutRate) {
+                    hiddenOutputs[i] = 0.0;
+                } else {
+                    hiddenOutputs[i] /= (1.0 - dropoutRate);
+                }
+            }
         }
 
         std::vector<double> outputs(outputSize, 0.0);
@@ -188,36 +200,41 @@ public:
     }
 
     void train(
-                const std::vector<std::pair<std::vector<double>, std::vector<double>>>& trainingData,
-                const std::vector<std::pair<std::vector<double>, std::vector<double>>>& validationData,
-                int numberOfIterations
-            ) {
-        double bestValidationLoss = std::numeric_limits<double>::max();
-        std::vector<std::vector<double>> bestWeightsInputToHidden;
-        std::vector<std::vector<double>> bestWeightsHiddenToOutput;
+            const std::vector<std::pair<std::vector<double>, std::vector<double>>>& trainingData,
+            const std::vector<std::pair<std::vector<double>, std::vector<double>>>& validationData,
+            long numberOfIterations,
+            int checkpointInterval = 1000
+        ) {
+            double bestValidationLoss = std::numeric_limits<double>::max();
+            std::vector<std::vector<double>> bestWeightsInputToHidden;
+            std::vector<std::vector<double>> bestWeightsHiddenToOutput;
 
-        ProgressBar progressBar(numberOfIterations);
-        for (int i = 0; i < numberOfIterations; i++) {
-            progressBar.update();
-            int randomIndex = rand() % trainingData.size();
-            const auto& [randomInputs, randomTargets] = trainingData[randomIndex];
-            backpropagation(randomInputs, randomTargets);
+            ProgressBar progressBar(numberOfIterations);
+            for (int i = 0; i < numberOfIterations; i++) {
+                progressBar.update();
+                int randomIndex = rand() % trainingData.size();
+                const auto& [randomInputs, randomTargets] = trainingData[randomIndex];
+                backpropagation(randomInputs, randomTargets);
 
-            // Evaluate on validation set periodically
-            if ((i + 1) % 100 == 0) {
-                double validationLoss = calculateLoss(validationData);
-                if (validationLoss < bestValidationLoss) {
-                    bestValidationLoss = validationLoss;
-                    bestWeightsInputToHidden = weights.inputToHidden;
-                    bestWeightsHiddenToOutput = weights.hiddenToOutput;
+                // Evaluate on validation set periodically and save checkpoints
+                if ((i + 1) % checkpointInterval == 0) {
+                    double validationLoss = calculateLoss(validationData);
+                    if (validationLoss < bestValidationLoss) {
+                        bestValidationLoss = validationLoss;
+                        bestWeightsInputToHidden = weights.inputToHidden;
+                        bestWeightsHiddenToOutput = weights.hiddenToOutput;
+                    } else {
+                        // If the validation loss has not improved, stop training
+                        break;
+                    }
                 }
             }
+
+            // Restore best weights
+            weights.inputToHidden = bestWeightsInputToHidden;
+            weights.hiddenToOutput = bestWeightsHiddenToOutput;
         }
 
-        // Restore best weights
-        weights.inputToHidden = bestWeightsInputToHidden;
-        weights.hiddenToOutput = bestWeightsHiddenToOutput;
-    }
 
     double calculateLoss(const std::vector<std::pair<std::vector<double>, std::vector<double>>>& data) {
         double totalLoss = 0.0;

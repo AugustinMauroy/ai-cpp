@@ -12,7 +12,6 @@ int main(void) {
     NeuralNetwork neuralNetwork(config, activation);
     int modelLoaded = neuralNetwork.loadModel("angles-model.txt");
 
-
     if(!modelLoaded) {
         std::vector<std::pair<std::vector<double>, std::vector<double>>> trainingData;
         std::cout << "Generating training data..." << std::endl;
@@ -28,7 +27,7 @@ int main(void) {
         std::cout << "Training data generated!" << std::endl;
 
         std::cout << "Starting training..." << std::endl;
-        neuralNetwork.train(trainingData, trainingData, 1000000);
+        neuralNetwork.train(trainingData, trainingData, 10000);
         std::cout << "Training finished!" << std::endl;
 
         std::cout << "Saving model..." << std::endl;
